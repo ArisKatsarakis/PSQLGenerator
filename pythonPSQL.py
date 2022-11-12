@@ -1,4 +1,15 @@
 import psycopg2
+tablesCount  = 0
+
+def getNewConnection():
+    return psycopg2.connect(
+        database='suppliers',
+        host='localhost',
+        user="postgres",
+        password='root',
+        port='5433'
+
+    )
 
 
 def createTables():
@@ -39,14 +50,7 @@ def createTables():
         """)
 
     try:
-        conn = psycopg2.connect(
-            database='suppliers',
-            host='localhost',
-            user="postgres",
-            password='root',
-            port='5433'
-
-        )
+        conn = getNewConnection()
 
         cur = conn.cursor()
         # create table one by one
@@ -90,7 +94,7 @@ def insertIntoTables(tableName, insertValues, insertColumn, returningValue):
 
 def showColumns(tableName):
     try:
-        
+
         conn = psycopg2.connect(
             database='suppliers',
             host='localhost',
@@ -108,7 +112,7 @@ def showColumns(tableName):
         print(commands)
         curs = conn.cursor()
         curs.execute(commands, tableName)
-        if  curs.rowcount == 0:
+        if curs.rowcount == 0:
             raise ModuleNotFoundError
         row = curs.fetchall()
         print(row)
@@ -116,17 +120,69 @@ def showColumns(tableName):
     except ModuleNotFoundError:
         print("'The Table doen\'t exist '")
         return ModuleNotFoundError
-        
+
     return curs.rowcount
 
 
+def dropAllTables():
+    conn = getNewConnection()
+    curs = conn.cursor()
+    # show all tables
+    commands = """
+     select tab.table_name FROM information_schema.tables tab WHERE table_schema = 'public'
+    """
+    curs.execute(commands)
+    row = curs.fetchall()
+    print(row[0])
+    row[0] = row[0].__str__().replace("('","")
+    row[0] = row[0].__str__().replace("',)","")
+    commands = "DROP TABLE {0};".format(row[0])
+    curs.execute(commands)
+    print(commands)
+    #Always Use commit after each execute that post Changes
+    conn.commit()
+    conn.close()
+
+def getTablesCount():
+
+    conn = getNewConnection()
+    curs = conn.cursor()
+    psql = """
+        SELECT table_name FROM information_schema.tables where table_schema = 'public'
+    """
+    curs.execute(psql)
+    row = curs.rowcount
+    if row == 0:
+        return 0
+    else:
+        return row
+
+def printAllTables():
+    conn = getNewConnection()
+    curs = conn.cursor()
+    commands = """
+        select tab.table_nae from information_schema.tables tab where table_schema = 'public'
+    """    
+    curs.execute(commands)
+    row = curs.fetchall()
+    print(row)
+    
+def printOptions():
+    print("c ---for creating a new Table")
+    print("i ---for inserting values to a table")
+    print("q ---for quering a table")
+
 if __name__ == '__main__':
     # insertIntoTables('COURSE',"Math","Title",'CourseNo')
+    operationChar = "n"
     print('PSQL AUTO TABLE GENERATOR')
-    print('which Table Columns do you want to See')
-    tableName = input()
-    columns = showColumns(str(tableName))
-    while columns != ModuleNotFoundError:
-        tableName = input()
-        columns = showColumns(str(tableName))
+    print("These Are your Tables")
+    tablesCount = getTablesCount()
+    if tablesCount == 0 :
+        print("There are No Tables in DB ")
+        print('Lets Insert Some in Our DB')
+    else:
+        printAllTables()
+    while operationChar != "e":
+        printOptions()
         
