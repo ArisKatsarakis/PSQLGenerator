@@ -1,5 +1,6 @@
 import psycopg2
 tablesCount  = 0
+from pprint import pprint
 
 def getNewConnection():
     return psycopg2.connect(
@@ -66,6 +67,33 @@ def createTables():
         if conn is not None:
             conn.close()
 
+#
+# First of All declares the Types of the columns in the new SQL Table
+# then creates the sql Query dynamically
+# executes and commits the changes in the DB 
+# #
+def createNewTable(tableName,tableValues):
+    tableValuesString = """"""
+    conn =  getNewConnection()
+    for value in tableValues:
+        print(value.__str__() + " is an INTEGER/VARCHAR/SERIAL ? ")
+        valueType = input()
+        tableValuesString = tableValuesString +" " + value + " " + valueType + ","
+    print(tableValuesString)
+    curs = conn.cursor()    
+    commands = """
+        CREATE TABLE {0} (
+            {1}
+        )
+    
+    """.format(tableName, tableValuesString)
+    print(commands)
+    
+    index =  commands.rfind(',')
+    commands = commands[:index] + commands[index+1:]
+    curs.execute(commands)
+    conn.commit()
+    conn.close()       
 
 def insertIntoTables(tableName, insertValues, insertColumn, returningValue):
 
@@ -108,14 +136,19 @@ def showColumns(tableName):
             select column_name,data_type from information_schema.columns where 
             table_name = '{0}'
         """.format(tableName)
-        print("Executing Query: ")
-        print(commands)
+        # print("Executing Query: ")
+        # print(commands)
         curs = conn.cursor()
         curs.execute(commands, tableName)
         if curs.rowcount == 0:
             raise ModuleNotFoundError
         row = curs.fetchall()
-        print(row)
+        for column in row:
+            column  = column.__str__().replace("(","")
+            column  = column.__str__().replace(")","")
+            column  = column.__str__().replace("'","")
+            pprint(column,width=30,indent=10,depth=10)
+            
         conn.close()
     except ModuleNotFoundError:
         print("'The Table doen\'t exist '")
@@ -161,16 +194,25 @@ def printAllTables():
     conn = getNewConnection()
     curs = conn.cursor()
     commands = """
-        select tab.table_nae from information_schema.tables tab where table_schema = 'public'
+        select tab.table_name from information_schema.tables tab where table_schema = 'public'
     """    
     curs.execute(commands)
-    row = curs.fetchall()
-    print(row)
-    
+
+    for row in curs.fetchall():
+        print("------Table----------")
+        row = row.__str__().replace("('","")
+        row = row.__str__().replace("',)","")
+        print(row.__str__())
+        print("------Values----------")
+        showColumns(row)
+
+
+
 def printOptions():
     print("c ---for creating a new Table")
     print("i ---for inserting values to a table")
     print("q ---for quering a table")
+    print("e ---for exiting Creator")
 
 if __name__ == '__main__':
     # insertIntoTables('COURSE',"Math","Title",'CourseNo')
@@ -185,4 +227,20 @@ if __name__ == '__main__':
         printAllTables()
     while operationChar != "e":
         printOptions()
-        
+        operationChar = input('Give an Option \n')
+        match operationChar:
+            case "c":
+                print("Give A Table Name: ")
+                tableName = input()
+                print("Give All Values included in the Table")
+                print("e -- if you want to stop adding values")
+                value = """"""
+                values = []
+                while value != """e""":
+                    value = input()
+                    if value == """e""":
+                        break
+                    else:
+                        values.append(value)
+                createNewTable(tableName, values)
+                printAllTables()
