@@ -95,7 +95,7 @@ def createNewTable(tableName,tableValues):
     conn.commit()
     conn.close()       
 
-def insertIntoTables(tableName, insertValues, insertColumn, returningValue):
+def insertIntoTables(tableName):
 
     conn = psycopg2.connect(
         database='suppliers',
@@ -110,16 +110,56 @@ def insertIntoTables(tableName, insertValues, insertColumn, returningValue):
     #          VALUES(%s) RETURNING %s ;
     # """
     commands = """
-        INSERT INTO  course(Tittle) VALUES('Math') RETURNING CourseNo;
-    """
+        SELECT column_name, data_type FROM information_schema.columns
+        WHERE table_name = '{0}'
+    """.format(tableName)
+    
     curs = conn.cursor()
-
-    curs.execute(commands, (tableName, insertColumn,
-                 insertValues, returningValue))
-    print(curs.fetchall())
+    curs.execute(commands)
+    row = curs.fetchone()
+    print("-------Values-------")
+    variables = """"""
+    values = """"""
+    
+    # Dynamic Building of the Query String
+    while row is not None:
+        print(row[0] + "= ? " )
+        variables = variables + row[0] + ","
+        if(row[1] == "varchar"):
+            values = values  + "'"+ input() + "'"
+        else:
+            values = values  + input() + ", "        
+        row = curs.fetchone()
+    
+    index = values.rfind(',')
+    values = values[:index] + values[index+1:]
+    index = variables.__str__().rfind(",")
+    variables = variables[:index] + variables[index+1:] 
+    insertQuery = """
+        INSERT INTO {0} ({1}) VALUES({2})
+    """.format(tableName,variables, values)
+    print(insertQuery)
+    curs.execute(insertQuery)
+    conn.commit()
     conn.close()
+    printTableValues(tableName)
+    
 
-
+def printTableValues(tableName):
+    conn = getNewConnection()
+    curs = conn.cursor()
+    commands  = """
+        SELECT * FROM {0};
+    """.format(tableName)
+    curs.execute(commands)
+    count = curs.rowcount
+    print("Results for {tableName} are: "+ count.__str__())
+    row = curs.fetchone()
+    while row is not None:
+        print(row)
+        row = curs.fetchone()
+    
+    
 def showColumns(tableName):
     try:
 
@@ -244,3 +284,11 @@ if __name__ == '__main__':
                         values.append(value)
                 createNewTable(tableName, values)
                 printAllTables()
+            case "i":
+                printAllTables()
+                print("Choose Table You want to Insert Values To:")
+                tableName = input()
+                insertIntoTables(tableName)
+            case "q":
+                printAllTableValues()
+    dropAllTables()
