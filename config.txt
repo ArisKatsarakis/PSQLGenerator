@@ -1,0 +1,12 @@
+ CREATE TABLE course (
+             CourseNo SERIAL PRIMARY KEY, Tittle VARCHAR(255), Year INTEGER, ClassSize INTEGER, InstructorId SERIAL,
+        );
+CREATE TABLE student (
+             StudentId SERIAL PRIMARY KEY, Name VARCHAR(255), Semester INTEGER,
+        );
+CREATE TABLE enroll (
+             StudentId SERIAL, courseno SERIAL, Year INTEGER,
+        );
+CREATE TABLE instructor (
+             InstructorId SERIAL PRIMARY KEY, Name VARCHAR(255), OfficeNo INTEGER,
+        )

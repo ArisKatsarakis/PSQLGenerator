@@ -1,6 +1,8 @@
 import psycopg2
+
 tablesCount  = 0
 from pprint import pprint
+
 
 def getNewConnection():
     return psycopg2.connect(
@@ -206,12 +208,13 @@ def dropAllTables():
     """
     curs.execute(commands)
     row = curs.fetchall()
-    print(row[0])
-    row[0] = row[0].__str__().replace("('","")
-    row[0] = row[0].__str__().replace("',)","")
-    commands = "DROP TABLE {0};".format(row[0])
-    curs.execute(commands)
-    print(commands)
+    for tab in row:
+        print("Drooping Table " + tab[0].__str__() + " !!!")
+        commands = "DROP TABLE {0};".format(tab[0])
+        curs.execute(commands)
+        print(commands)
+
+        
     #Always Use commit after each execute that post Changes
     conn.commit()
     conn.close()
@@ -246,13 +249,62 @@ def printAllTables():
         print("------Values----------")
         showColumns(row)
 
-
-
+def printAllTableValues():
+    conn = getNewConnection()
+    curs = conn.cursor()
+    tableQuery = """
+        SELECT table_name FROM information_schema.tables 
+        WHERE table_schema = 'public'
+    """
+    curs.execute(tableQuery)
+    #in Tables we put the names of the TAbles
+    tables = []
+    row = curs.fetchone()
+    while row is not None:
+        tables.append(row[0])
+        row = curs.fetchone()
+    
+    print(tables)
+    for tab in tables:
+        print("TABLE: " + tab.__str__())
+        print("""+++++++++++++++Columns++++++++++++++++""")
+        showColumns(tab)
+        print("""++++++++++++++++Values++++++++++++++++""")
+        selectQuery = """
+            SELECT * FROM {0}
+        """.format(tab)
+        curs.execute(selectQuery)
+        val = curs.fetchone()
+        while val is not None:
+            print(val)
+            val = curs.fetchone()
+            
+    conn.close()
 def printOptions():
     print("c ---for creating a new Table")
     print("i ---for inserting values to a table")
     print("q ---for quering a table")
     print("e ---for exiting Creator")
+    
+def queryTable():
+    conn = getNewConnection()
+    curs = conn.cursor()
+    query = input("Please place a query ")
+    curs.execute(query)
+    row = curs.rowcount
+    if row == 0:
+        conn.close()
+        return
+    else:
+        row = curs.fetchone()
+        while row is not None:
+            print(row)
+            row = curs.fetchone()
+        
+        conn.commit()
+        conn.close()
+        return
+
 
 if __name__ == '__main__':
     # insertIntoTables('COURSE',"Math","Title",'CourseNo')
@@ -291,4 +343,5 @@ if __name__ == '__main__':
                 insertIntoTables(tableName)
             case "q":
                 printAllTableValues()
+                queryTable()
     dropAllTables()
