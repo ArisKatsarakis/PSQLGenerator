@@ -2,7 +2,7 @@ import psycopg2
 
 tablesCount  = 0
 from pprint import pprint
-
+from tabulate import tabulate
 
 def getNewConnection():
     return psycopg2.connect(
@@ -150,16 +150,32 @@ def insertIntoTables(tableName):
 def printTableValues(tableName):
     conn = getNewConnection()
     curs = conn.cursor()
-    commands  = """
-        SELECT * FROM {0};
+    
+    tableColumnsComands = """
+        SELECT column_name from information_schema.columns where table_name = '{0}'
     """.format(tableName)
+    curs.execute(tableColumnsComands)
+    tableValues = []
+
+    columns = []
+    col = curs.fetchone()
+    while col is not None:
+        columns.append(col[0])
+        col = curs.fetchone()
+    tableValues.append(columns)
+    commands  = """
+        SELECT {1} FROM {0} ;
+    """.format(tableName,str(tableValues).strip("[]").replace("'",""))
+    print(commands)
     curs.execute(commands)
     count = curs.rowcount
     print("Results for {tableName} are: "+ count.__str__())
     row = curs.fetchone()
     while row is not None:
-        print(row)
+        tableValues.append(row)
         row = curs.fetchone()
+    print(tabulate(tableValues,headers='firstrow'))
+    
     
     
 def showColumns(tableName):
@@ -184,13 +200,12 @@ def showColumns(tableName):
         curs.execute(commands, tableName)
         if curs.rowcount == 0:
             raise ModuleNotFoundError
-        row = curs.fetchall()
-        for column in row:
-            column  = column.__str__().replace("(","")
-            column  = column.__str__().replace(")","")
-            column  = column.__str__().replace("'","")
-            pprint(column,width=30,indent=10,depth=10)
-            
+        row = curs.fetchone()
+        rows= []
+        while row is not None:
+            rows.append(row[0])
+            row = curs.fetchone()
+        print(tabulate(rows))            
         conn.close()
     except ModuleNotFoundError:
         print("'The Table doen\'t exist '")
@@ -246,7 +261,7 @@ def printAllTables():
         row = row.__str__().replace("('","")
         row = row.__str__().replace("',)","")
         print(row.__str__())
-        print("------Values----------")
+        print("----------Columns----------")
         showColumns(row)
 
 def printAllTableValues():
