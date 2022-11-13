@@ -1,8 +1,6 @@
 import psycopg2
 
 tablesCount  = 0
-from pprint import pprint
-from tabulate import tabulate
 from prettytable import PrettyTable
 from configparser import ConfigParser
 
