@@ -4,15 +4,18 @@ tablesCount  = 0
 from pprint import pprint
 from tabulate import tabulate
 from prettytable import PrettyTable
-from prettytable import from_db_cursor
+from configparser import ConfigParser
 
 def getNewConnection():
+    config = ConfigParser()
+    config.read('config.ini')
+    print(config['DBConfig']['database'])
     return psycopg2.connect(
-        database='suppliers',
-        host='localhost',
-        user="postgres",
-        password='root',
-        port='5433'
+        database=config['DBConfig']['database'],
+        host=config["DBConfig"]["host"],
+        user=config["DBConfig"]["user"],
+        password=config["DBConfig"]["password"],
+        port=config["DBConfig"]["port"]
 
     )
 
