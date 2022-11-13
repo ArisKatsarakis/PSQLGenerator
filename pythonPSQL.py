@@ -284,6 +284,7 @@ def printOptions():
     print("c ---for creating a new Table")
     print("i ---for inserting values to a table")
     print("q ---for quering a table")
+    print("p ---print all table values")
     print("e ---for exiting Creator")
     
 def queryTable():
@@ -344,4 +345,12 @@ if __name__ == '__main__':
             case "q":
                 printAllTableValues()
                 queryTable()
+            case "p":
+                tablesCount = getTablesCount()
+                if tablesCount==0:
+                    print('There are no tables to print ')
+                else:
+                    printAllTables()
+                    tableName = input("Insert the Table you want to print \n ")
+                    printTableValues(tableName)
     dropAllTables()
