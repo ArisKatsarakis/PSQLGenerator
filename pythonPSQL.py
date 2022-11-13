@@ -3,6 +3,8 @@ import psycopg2
 tablesCount  = 0
 from pprint import pprint
 from tabulate import tabulate
+from prettytable import PrettyTable
+from prettytable import from_db_cursor
 
 def getNewConnection():
     return psycopg2.connect(
@@ -174,7 +176,10 @@ def printTableValues(tableName):
     while row is not None:
         tableValues.append(row)
         row = curs.fetchone()
-    print(tabulate(tableValues,headers='firstrow'))
+    ptab = PrettyTable(tableValues[0])
+    ptab.add_rows(tableValues[1:])
+    print(ptab)
+    conn.close()
     
     
     
@@ -203,9 +208,11 @@ def showColumns(tableName):
         row = curs.fetchone()
         rows= []
         while row is not None:
-            rows.append(row[0])
+            rows.append(row)
             row = curs.fetchone()
-        print(tabulate(rows))            
+        ptab = PrettyTable(rows[0])
+        ptab.add_rows(rows[1:])
+        print(ptab)            
         conn.close()
     except ModuleNotFoundError:
         print("'The Table doen\'t exist '")
@@ -255,7 +262,7 @@ def printAllTables():
         select tab.table_name from information_schema.tables tab where table_schema = 'public'
     """    
     curs.execute(commands)
-
+    
     for row in curs.fetchall():
         print("------Table----------")
         row = row.__str__().replace("('","")
